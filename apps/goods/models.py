@@ -1,8 +1,8 @@
 from django.db import models
 from db.base_model import BaseModel
 from tinymce.models import HTMLField
-# Create your models here.
 
+# Create your models here.
 
 class GoodsType(BaseModel):
     """
@@ -13,7 +13,7 @@ class GoodsType(BaseModel):
     image = models.ImageField(upload_to='type', verbose_name='商品类型图片')
 
     class Meta:
-        db_table = 'df_goods_type'
+        db_table = 'goods_type'
         verbose_name = '商品种类'
         verbose_name_plural = verbose_name
 
@@ -41,7 +41,7 @@ class GoodsSKU(BaseModel):
     status = models.SmallIntegerField(default=1, choices=status_choices, verbose_name='商品状态')
 
     class Meta:
-        db_table = 'df_goods_sku'
+        db_table = 'goods_sku'
         verbose_name = '商品'
         verbose_name_plural = verbose_name
 
@@ -55,7 +55,7 @@ class Goods(BaseModel):
     detail = HTMLField(blank=True, verbose_name='商品详情')
 
     class Meta:
-        db_table = 'df_goods'
+        db_table = 'goods'
         verbose_name = '商品SPU'
         verbose_name_plural = verbose_name
 
@@ -68,7 +68,7 @@ class GoodsImage(BaseModel):
     image = models.ImageField(upload_to='goods', verbose_name='图片路径')
 
     class Meta:
-        db_table = 'df_goods_image'
+        db_table = 'goods_image'
         verbose_name = '商品图片'
         verbose_name_plural = verbose_name
 
@@ -82,7 +82,7 @@ class IndexGoodsBanner(BaseModel):
     index = models.SmallIntegerField(default=0, verbose_name='展示顺序')
 
     class Meta:
-        db_table = 'df_index_banner'
+        db_table = 'index_banner'
         verbose_name = '首页轮播商品'
         verbose_name_plural = verbose_name
 
@@ -102,7 +102,7 @@ class IndexTypeGoodsBanner(BaseModel):
     index = models.SmallIntegerField(default=0, verbose_name='展示顺序')
 
     class Meta:
-        db_table = 'df_index_type_goods'
+        db_table = 'index_type_goods'
         verbose_name = "主页分类展示商品"
         verbose_name_plural = verbose_name
 
@@ -117,6 +117,6 @@ class IndexPromotionBanner(BaseModel):
     index = models.SmallIntegerField(default=0, verbose_name='展示顺序')
 
     class Meta:
-        db_table = 'df_index_promotion'
+        db_table = 'index_promotion'
         verbose_name = "主页促销活动"
         verbose_name_plural = verbose_name

@@ -1,5 +1,6 @@
 from django.db import models
 from db.base_model import BaseModel
+
 # Create your models here.
 
 class OrderInfo(BaseModel):
@@ -32,7 +33,7 @@ class OrderInfo(BaseModel):
     trade_no = models.CharField(max_length=128, verbose_name='支付编号')
 
     class Meta:
-        db_table = 'df_order_info'
+        db_table = 'order_info'
         verbose_name = '订单'
         verbose_name_plural = verbose_name
 
@@ -48,6 +49,6 @@ class OrderGoods(BaseModel):
     comment = models.CharField(max_length=256, verbose_name='评论')
 
     class Meta:
-        db_table = 'df_order_goods'
+        db_table = 'order_goods'
         verbose_name = '订单商品'
         verbose_name_plural = verbose_name

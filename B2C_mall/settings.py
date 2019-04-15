@@ -16,7 +16,7 @@ import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
+#sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -40,10 +40,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'user',     # 用户模块
-    'order',    # 订单模块
-    'goods',    # 商品模块
-    'cart',     # 购物车模块
+    'apps.user',     # 用户模块
+    'apps.order',    # 订单模块
+    'apps.goods',    # 商品模块
+    'apps.cart',     # 购物车模块
     'tinymce',  # 富文本编辑器
 )
 
@@ -116,7 +116,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'templates')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 
 # tinymce 富文本编辑器
@@ -125,3 +125,14 @@ TINYMCE_DEFAULT_CONFIG = {
     'width': 600,
     'height': 400,
 }
+
+# 发送邮件配置
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.qq.com'
+EMAIL_PORT = 25
+# 发送邮件的邮箱
+EMAIL_HOST_USER = '206820245@qq.com'
+# 在邮箱中获取的授权密码
+EMAIL_HOST_PASSWORD = 'qmeqnnjokrcabjdd'
+# 收件人看到的发件人
+EMAIL_FROM = '超级商城<206820245@qq.com>'

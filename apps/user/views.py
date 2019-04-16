@@ -1,10 +1,12 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, redirect
 from apps.user.models import User
 from django.views.generic import View
+from django.core.urlresolvers import reverse
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import SignatureExpired
 from django.conf import settings
-from django.core.mail import send_mail
+from django.contrib.auth import authenticate, login
+from celery_tasks.tasks import send_register_active_email
 import re
 
 # Create your views here.
@@ -61,17 +63,9 @@ class RegisterView(View):
             token = token.decode()
 
             # 发送邮件
-            subject = '超级商城欢迎注册'
-            message = ''
-            receiver = [email]
-            html_message = '<h1>%s，欢迎注册超级商城账号</h1>' \
-                           '请点击下面链接激活您的账号<br>' \
-                           '<a href=http://127.0.0.1:8000/user/active/%s>' \
-                           'http://127.0.0.1:8000/user/active/%s</a>' % (username, token, token)
-            sender = settings.EMAIL_FROM
-            send_mail(subject, message, sender, receiver, html_message=html_message)
+            send_register_active_email.delay(email, username, token)
 
-            return HttpResponse('OK')
+            return redirect(reverse('user:login'))
         else:
             return render(request, 'register.html', {'error': '该用户已注册'})
 
@@ -84,12 +78,54 @@ class ActiveView(View):
         serializer = Serializer(settings.SECRET_KEY, 3600)
         try:
             info = serializer.loads(token)
-            id = info['confirm']
-            user = User.objects.get(id=id)
+            user_id = info['confirm']
+            user = User.objects.get(id=user_id)
             user.is_active = True
             user.save()
-            return HttpResponse('OK')
+            return redirect(reverse('user:login'))
 
         # 过期后会触发SignatureExpired异常
         except SignatureExpired:
             return HttpResponse('激活链接已过期')
+
+class LoginView(View):
+    """
+    用户登陆视图
+    """
+    def get(self, request):
+        username = ''
+        checked = ''
+        if 'username' in request.COOKIES:
+            username = request.COOKIES['username']
+            checked = 'checked'
+        return render(request, 'login.html', {'username': username, 'checked': checked})
+
+    def post(self, request):
+        username = request.POST.get('username')
+        password = request.POST.get('pwd')
+        remember = request.POST.get('remember')
+        print(remember)
+
+        if not all([username, password]):
+            return render(request, 'login.html', {'error': '用户名或密码填写不完整'})
+
+        # 使用Django内置的用户认证系统来进行账号密码验证
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            if user.is_active:
+                # 使用Django内置的用户认证系统来记录用户登陆状态
+                login(request, user)
+
+                response = redirect(reverse('goods:index'))
+                # 记住用户名
+
+                if remember == 'on':
+                    response.set_cookie('username', username)
+                else:
+                    response.delete_cookie('username')
+                # 重定向到首页
+                return response
+            else:
+                return render(request, 'login.html', {'error': '账户未激活'})
+        else:
+            return render(request, 'login.html', {'error': '用户名或密码错误'})

@@ -46,7 +46,10 @@ html,body{height:100%}
 .search_con .input_text{width:470px;height:34px;border:0px;margin:2px 0 0 36px;outline:none;font-size:12px;color:#737272;font-family:'Microsoft Yahei'}
 
 .search_con .input_btn{
-	width:100px;height:38px;background-color:#FF1493;border:0px;font-size:14px;color:black;font-family:'Microsoft Yahei';outline:none;cursor:pointer;
+	width:100px;height:38px;background-color:#FF1493;border:0px;font-size:20px;color:black;font-family:'Microsoft Yahei';outline:none;cursor:pointer;
+}
+.search_con .input_btn:hover {
+	background: red;
 }
 
 .guest_cart{
@@ -633,12 +636,19 @@ html,body{height:100%}
 .info_submit{
 	width:80px;
 	height:30px;
-	background-color:#37ab40;
+	background-color:#FF1493;
 	border:0px;
 	color:#fff;
 	margin:10px 0 10px 100px;
 	cursor:pointer;
-	font-family:'Microsoft Yahei'
+	font-family:'Microsoft Yahei';
+    border-radius: 15px;
+	font-size: 14px;
+	font-weight: bold;
+}
+
+.info_submit:hover {
+    background: red;
 }
 
 .stress{

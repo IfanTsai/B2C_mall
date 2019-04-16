@@ -5,8 +5,9 @@ from django.core.urlresolvers import reverse
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import SignatureExpired
 from django.conf import settings
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from celery_tasks.tasks import send_register_active_email
+from utils.mixin import LoginRequireMinin
 import re
 
 # Create your views here.
@@ -104,7 +105,9 @@ class LoginView(View):
         username = request.POST.get('username')
         password = request.POST.get('pwd')
         remember = request.POST.get('remember')
-        print(remember)
+
+        # 获取登陆候所要跳转的地址，默认跳转到首页
+        next_url = request.GET.get('next', reverse('goods:index'))
 
         if not all([username, password]):
             return render(request, 'login.html', {'error': '用户名或密码填写不完整'})
@@ -116,16 +119,51 @@ class LoginView(View):
                 # 使用Django内置的用户认证系统来记录用户登陆状态
                 login(request, user)
 
-                response = redirect(reverse('goods:index'))
+                response = redirect(next_url)
                 # 记住用户名
 
                 if remember == 'on':
                     response.set_cookie('username', username)
                 else:
                     response.delete_cookie('username')
+
                 # 重定向到首页
+                # 从文档中可知，如果使用了Django自带的认证系统，Django会自动把request.user传递给模板
+                # 所以在模板中可以获取user.username
                 return response
             else:
                 return render(request, 'login.html', {'error': '账户未激活'})
         else:
             return render(request, 'login.html', {'error': '用户名或密码错误'})
+
+class LogoutView(View):
+    """
+    退出登陆视图
+    """
+    def get(self, request):
+        logout(request)
+        return redirect(reverse('goods:index'))
+
+class UserInfoView(LoginRequireMinin, View):
+    """
+    用户中心-信息页
+    """
+    def get(self, request):
+        page = 'info'
+        return render(request, 'user_center_info.html', {'page': page})
+
+class UserOrderView(LoginRequireMinin, View):
+    """
+     用户中心-订单页
+    """
+    def get(self, request):
+        page = 'order'
+        return render(request, 'user_center_order.html', {'page': page})
+
+class AddressView(LoginRequireMinin, View):
+    """
+    用户中心-地址页
+    """
+    def get(self, request):
+        page = 'address'
+        return render(request, 'user_center_site.html', {'page': page})

@@ -1,5 +1,6 @@
 from django.shortcuts import render, HttpResponse, redirect
-from apps.user.models import User
+from apps.user.models import User, Address
+from apps.goods.models import GoodsSKU
 from django.views.generic import View
 from django.core.urlresolvers import reverse
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
@@ -8,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from celery_tasks.tasks import send_register_active_email
 from utils.mixin import LoginRequireMinin
+from django_redis import get_redis_connection
 import re
 
 # Create your views here.
@@ -149,21 +151,77 @@ class UserInfoView(LoginRequireMinin, View):
     用户中心-信息页
     """
     def get(self, request):
-        page = 'info'
-        return render(request, 'user_center_info.html', {'page': page})
+
+        user = request.user
+
+        # 获取用户的个人信息
+        address = Address.objects.get_default_addr(user)
+
+        # 获取用户的历史浏览记录
+        # 'default'表示使用的是settings.py中配置的redis
+        conn = get_redis_connection('default')
+        history_key = 'history_%d' % user.id
+        sku_ids = conn.lrange(history_key, 0, 4)
+
+        goods_li = []
+        for sku_id in sku_ids:
+            goods_li.append(GoodsSKU.objects.get(id=sku_id))
+
+        context = {
+            'page': 'info',
+            'user': user,
+            'address': address,
+            'goods_li': goods_li,
+        }
+
+        return render(request, 'user_center_info.html', context)
 
 class UserOrderView(LoginRequireMinin, View):
     """
      用户中心-订单页
     """
     def get(self, request):
-        page = 'order'
-        return render(request, 'user_center_order.html', {'page': page})
+
+        # 获取用户的订单信息
+
+        return render(request, 'user_center_order.html', {'page': 'order'})
 
 class AddressView(LoginRequireMinin, View):
     """
     用户中心-地址页
     """
     def get(self, request):
-        page = 'address'
-        return render(request, 'user_center_site.html', {'page': page})
+
+        # 获取用户的默认收货地址
+        address = Address.objects.get_default_addr(request.user)
+
+        return render(request, 'user_center_site.html', {'page': 'address', 'address': address})
+
+    def post(self, request):
+        """
+        添加收货人信息
+        :param request:
+        :return:
+        """
+        receiver = request.POST['receiver']
+        addr = request.POST['addr']
+        zip_code = request.POST['zip_code']
+        phone = request.POST['phone']
+
+        if not all([receiver, addr, phone]):
+            return render(request, 'user_center_site.html', {'error': '收货人信息填写不完整'})
+
+        if not re.match(r'^1[34578]\d{9}$', phone):
+            return render(request, 'user_center_site.html', {'error': '手机号码格式不正确'})
+
+        # 如果用户已存在默认收货地址，添加的地址则不作为默认收货地址，否则作为默认收货地址
+
+        address = Address.objects.get_default_addr(request.user)
+        is_default = False if address else True
+
+        # 添加地址
+        Address.objects.create(user=request.user, addr=addr,
+                               receiver=receiver, zip_code=zip_code,
+                               phone=phone, is_default=is_default)
+
+        return redirect(reverse('user:address'))

@@ -2,8 +2,6 @@ from django.db import models
 from db.base_model import BaseModel
 from tinymce.models import HTMLField
 
-# Create your models here.
-
 class GoodsType(BaseModel):
     """
     商品类型模型类
@@ -19,7 +17,6 @@ class GoodsType(BaseModel):
 
     def __str__(self):
         return self.name
-
 
 class GoodsSKU(BaseModel):
     """
@@ -45,6 +42,10 @@ class GoodsSKU(BaseModel):
         verbose_name = '商品'
         verbose_name_plural = verbose_name
 
+    def __str__(self):
+        return self.name
+
+
 
 class Goods(BaseModel):
     """
@@ -59,6 +60,8 @@ class Goods(BaseModel):
         verbose_name = '商品SPU'
         verbose_name_plural = verbose_name
 
+    def __str__(self):
+        return self.name
 
 class GoodsImage(BaseModel):
     """
@@ -71,6 +74,9 @@ class GoodsImage(BaseModel):
         db_table = 'goods_image'
         verbose_name = '商品图片'
         verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.sku.name
 
 
 class IndexGoodsBanner(BaseModel):
@@ -85,6 +91,10 @@ class IndexGoodsBanner(BaseModel):
         db_table = 'index_banner'
         verbose_name = '首页轮播商品'
         verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.sku.name
+
 
 
 class IndexTypeGoodsBanner(BaseModel):
@@ -106,6 +116,8 @@ class IndexTypeGoodsBanner(BaseModel):
         verbose_name = "主页分类展示商品"
         verbose_name_plural = verbose_name
 
+    def __str__(self):
+        return self.sku.name
 
 class IndexPromotionBanner(BaseModel):
     """
@@ -120,3 +132,6 @@ class IndexPromotionBanner(BaseModel):
         db_table = 'index_promotion'
         verbose_name = "主页促销活动"
         verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name

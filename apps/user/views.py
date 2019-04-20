@@ -8,11 +8,9 @@ from itsdangerous import SignatureExpired
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from celery_tasks.tasks import send_register_active_email
-from utils.mixin import LoginRequireMinin
+from utils.mixin import LoginRequireMixin
 from django_redis import get_redis_connection
 import re
-
-# Create your views here.
 
 class RegisterView(View):
     """
@@ -146,7 +144,7 @@ class LogoutView(View):
         logout(request)
         return redirect(reverse('goods:index'))
 
-class UserInfoView(LoginRequireMinin, View):
+class UserInfoView(LoginRequireMixin, View):
     """
     用户中心-信息页
     """
@@ -176,7 +174,7 @@ class UserInfoView(LoginRequireMinin, View):
 
         return render(request, 'user_center_info.html', context)
 
-class UserOrderView(LoginRequireMinin, View):
+class UserOrderView(LoginRequireMixin, View):
     """
      用户中心-订单页
     """
@@ -186,7 +184,7 @@ class UserOrderView(LoginRequireMinin, View):
 
         return render(request, 'user_center_order.html', {'page': 'order'})
 
-class AddressView(LoginRequireMinin, View):
+class AddressView(LoginRequireMixin, View):
     """
     用户中心-地址页
     """

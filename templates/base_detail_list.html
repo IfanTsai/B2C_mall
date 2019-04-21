@@ -8,8 +8,8 @@
 				<h1>全部商品分类</h1>
 				<span></span>
 				<ul class="subnav">
-                    {% for type in types %}
-					    <li><a href="#" class="{{ type.logo }}">{{ type.name }}</a></li>
+                    {% for goods_type in goods_types %}
+					    <li><a href="{% url 'goods:list' goods_type.id 1 %}" class="{{ goods_type.logo }}">{{ goods_type.name }}</a></li>
                     {% endfor %}
 				</ul>
 			</div>

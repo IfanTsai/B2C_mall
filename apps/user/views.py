@@ -106,7 +106,7 @@ class LoginView(View):
         password = request.POST.get('pwd')
         remember = request.POST.get('remember')
 
-        # 获取登陆候所要跳转的地址，默认跳转到首页
+        # 获取登陆后所要跳转的地址，默认跳转到首页
         next_url = request.GET.get('next', reverse('goods:index'))
 
         if not all([username, password]):

@@ -1,5 +1,7 @@
 {% extends 'base_detail_list.html' %}
 
+{% load staticfiles %}
+
 {% block title %}超级商城-商品详情{% endblock title %}
 
 {% block main_content %}
@@ -39,8 +41,9 @@
             </div>
 			<div class="total">总价：<em>16.80元</em></div>
 			<div class="operate_btn">
+                {% csrf_token %}
 				<a href="javascript:;" class="buy_btn">立即购买</a>
-				<a href="javascript:;" class="add_cart" id="add_cart">加入购物车</a>				
+				<a href="javascript:;" sku_id = "{{ sku.id }}" class="add_cart" id="add_cart">加入购物车</a>
 			</div>
 		</div>
 	</div>
@@ -83,7 +86,6 @@
                 </dl>
             </div>
 
-
 		</div>
 	</div>
 {% endblock main_content%}
@@ -93,25 +95,100 @@
 {% endblock bottom %}
 
 {% block bottom_files %}
-	<script type="text/javascript" src="js/jquery-1.12.2.js"></script>
+	<script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
 	<script type="text/javascript">
-		var $add_x = $('#add_cart').offset().top;
-		var $add_y = $('#add_cart').offset().left;
+        // 更新商品总价
+        let update_goods_amount = function() {
+            // 获取商品单价和数量
+            let price = $('.show_pirze').children('em').text()
+            let count = $('.num_show').val()
+            // 计算商品总价
+            let amount = parseFloat(price) * parseInt(count)
+            // 设置商品总价
+            $('.total').children('em').text(amount.toFixed(2) + '元')
+        }
+        update_goods_amount()
 
-		var $to_x = $('#show_count').offset().top;
-		var $to_y = $('#show_count').offset().left;
+        // 增加商品数量click事件
+        $('.add').click(function() {
+            // 获取商品原有数目
+            let count = $('.num_show').val()
+            // +1
+            count = parseInt(count) + 1
+            // 设置商品数目
+            $('.num_show').val(count)
+            // 更新商品总价
+            update_goods_amount()
+        })
 
-		$(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
+        // 减少商品数量click事件
+        $('.minus').click(function() {
+            // 获取商品原有数目
+            let count = $('.num_show').val()
+            // -1
+            count = parseInt(count) - 1
+            count = count > 0 ? count : 1
+            // 设置商品数目
+            $('.num_show').val(count)
+            // 更新商品总价
+            update_goods_amount()
+        })
+
+        // 手动输入商品数量keyup事件
+        $('.num_show').keyup(function(event) {
+            // 获取输入值
+            let val = event.target.value
+            // 对输入值非法校验
+            if (isNaN(val) || val.trim().length === 0 || parseInt(val) <= 0) {
+                val = 1
+            }
+            // 设置值
+            $(this).val(parseInt(val))
+            // 更新商品总价
+            update_goods_amount()
+        })
+
+        // 获取add_cart左上角坐标
+		let $add_x = $('#add_cart').offset().top;
+		let $add_y = $('#add_cart').offset().left;
+
+		// 获取show_count左上角坐标
+		let $to_x = $('#show_count').offset().top;
+		let $to_y = $('#show_count').offset().left;
+
 		$('#add_cart').click(function(){
-			$(".add_jump").stop().animate({
-				'left': $to_y+7,
-				'top': $to_x+7},
-				"fast", function() {
-					$(".add_jump").fadeOut('fast',function(){
-						$('#show_count').html(2);
-					});
-
-			});
-		})
+		    // 获取商品id和数量
+            let sku_id = $(this).attr('sku_id')
+            let count = $('.num_show').val()
+            // 获取csrf隐藏域的值
+            let csrf = $('input[name="csrfmiddlewaretoken"]').val()
+            // 发起AJAX请求
+            $.ajax({
+                    'url': '/cart/add',
+                    'dataType': 'json',
+                    'type': 'post',
+                    // 发送的json数据
+                    'data': {'sku_id': sku_id, 'count': count, 'csrfmiddlewaretoken': csrf},
+                }).success(function (data) {
+                    // 处理后台返回的json数据
+                    if (data.res === 1) {
+                        $(".add_jump").css({
+                            'left': $add_y + 80,
+                            'top': $add_x + 10,
+                            'display': 'block',
+                        })
+                        $(".add_jump").stop().animate({
+                        'left': $to_y + 7,
+                        'top': $to_x + 7},
+                        'fast', function() {
+                            $(".add_jump").fadeOut('fast', function(){
+                                $('#show_count').html(data.count);
+                            });
+                        });
+                    } else {
+                        alert(data.error)
+                    }
+                })
+            })
 	</script>
 {% endblock bottom_files %}

@@ -400,7 +400,7 @@ html,body{height:100%}
 
 .common_title{width:1200px;margin:20px auto 0;font-size:14px;}
 
-.common_list_con{width:1200px;border:1px solid #dddddd;border-top:2px solid #00bc6f;margin:10px auto 0;background-color:#f7f7f7;position:relative;}
+.common_list_con{width:1200px;border:1px solid #dddddd;border-top:2px solid pink;margin:10px auto 0;background-color:#f7f7f7;position:relative;}
 
 .common_list_con dl{margin:20px;}
 .common_list_con dt{font-size:14px;font-weight:bold;margin-bottom:10px}

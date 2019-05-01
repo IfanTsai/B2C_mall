@@ -102,24 +102,20 @@
                 'data': {'addr_id': addr_id, 'pay_method': pay_method, 'sku_ids': sku_ids, 'csrfmiddlewaretoken': csrf},
             }).success(function(data) {
                 // 处理后台返回的json数据
+                // 创建成功
                 if (data.res === 1) {
-                    alert('创建成功')
+                    localStorage.setItem('order_finish', '2')
+                    $('.popup_con').fadeIn('fast', function() {
+                        setTimeout(function() {
+                            $('.popup_con').fadeOut('fast',function(){
+                                window.location.href = '{% url 'user:order' 1 %}'
+                            })
+                        },3000)
+                    })
                 } else {
                     alert(data.error)
                 }
             })
-
-{% comment %}			localStorage.setItem('order_finish', 2)
-
-			$('.popup_con').fadeIn('fast', function() {
-
-				setTimeout(function(){
-					$('.popup_con').fadeOut('fast',function(){
-						window.location.href = 'index.html';
-					});
-				},3000)
-
-			}){% endcomment %}
 		})
 	</script>
 {% endblock %}

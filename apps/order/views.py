@@ -115,37 +115,58 @@ class OrderCommitView(View):
             cart_key = 'cart_%d' % user.id
             sku_ids = sku_ids.split(',')
             for sku_id in sku_ids:
-                try:
-                    sku = GoodsSKU.objects.get(id=sku_id)
-                except:
-                    # 回滚到保存点
-                    transaction.rollback(save_id)
-                    return JsonResponse({'res': -5, 'error': '商品不存在'})
+                # 乐观锁，尝试三次
+                for i in range(3):
+                    try:
+                        sku = GoodsSKU.objects.get(id=sku_id)
+                        # 加上悲观锁   等效SQL语句：select * from goods_sku where id=sku_id for update;
+                        # 当rollback或者commit后，自动释放锁
+                        #sku = GoodsSKU.objects.select_for_update().get(id=sku_id)
+                    except:
+                        # 回滚到保存点
+                        transaction.rollback(save_id)
+                        return JsonResponse({'res': -5, 'error': '商品不存在'})
 
-                # 从redis中获取用户所需要购买的商品数量
-                count = conn.hget(cart_key, sku_id)
+                    # 从redis中获取用户所需要购买的商品数量
+                    count = conn.hget(cart_key, sku_id)
 
-                # 判断商品库存
-                if int(count) > sku.stock:
-                    # 回滚到保存点
-                    transaction.rollback(save_id)
-                    return JsonResponse({'res': -6, 'error': '商品库存不足'})
+                    # 判断商品库存
+                    if int(count) > sku.stock:
+                        # 回滚到保存点
+                        transaction.rollback(save_id)
+                        return JsonResponse({'res': -6, 'error': '商品库存不足'})
 
-                # order_goods表中加入记录
-                OrderGoods.objects.create(order=order,
-                                          sku=sku,
-                                          count=count,
-                                          price=sku.price)
+                    # 更新商品库存和销量
+                    # sku.stock -= int(count)
+                    # sku.sales += int(count)
+                    # sku.save()
 
-                # 更新商品库存和销量
-                sku.stock -= int(count)
-                sku.sales += int(count)
-                sku.save()
+                    orign_stock = sku.stock
+                    new_stock = orign_stock - int(count)
+                    new_sales = sku.sales + int(count)
+                    # 乐观锁，等效SQL语句：
+                    # update goods_sku set stock=new_stock, sales=new_sales where id=sku_id and stock=origin_stock;
+                    # 返回受影响的行数
+                    res = GoodsSKU.objects.filter(id=sku_id, stock=orign_stock).update(stock=new_stock, sales=new_sales)
+                    if res == 0:
+                        # 尝试到第三次还是失败的情况
+                        if i == 2:
+                            transaction.savepoint_rollback(save_id)
+                            return JsonResponse({'res': -7, 'error': '下单失败'})
+                        continue
 
-                # 累加计算订单商品总数和总价
-                amount = sku.price * int(count)
-                total_count += int(count)
-                total_price += amount
+                    # order_goods表中加入记录
+                    OrderGoods.objects.create(order=order,
+                                              sku=sku,
+                                              count=count,
+                                              price=sku.price)
+
+                    # 累加计算订单商品总数和总价
+                    amount = sku.price * int(count)
+                    total_count += int(count)
+                    total_price += amount
+
+                    break
 
             # 更新订单信息表中的商品总数和总价
             order.total_count = total_count
